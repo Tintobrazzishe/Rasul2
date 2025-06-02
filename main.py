@@ -23,12 +23,31 @@ model = genai.GenerativeModel(
     """
 )
 
+# 💾 Память пользователей
+user_history = {}
+
 # 📩 Обработка входящих сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_input = update.message.text
+    chat_id = update.effective_chat.id
+
+    # Получаем историю для этого пользователя
+    history = user_history.get(chat_id, [])
+    history.append({"role": "user", "parts": [user_input]})
+
     try:
-        response = model.generate_content(user_input)
+        # Создаём чат с историей
+        convo = model.start_chat(history=history)
+        response = convo.send_message(user_input)
+
+        # Добавляем ответ в историю
+        history.append({"role": "model", "parts": [response.text]})
+
+        # Сохраняем обновлённую историю
+        user_history[chat_id] = history[-20:]  # храним только последние 20 сообщений
+
         await update.message.reply_text(response.text)
+
     except Exception as e:
         print(f"Ошибка: {e}")
         await update.message.reply_text("Чёт я затупил, братишка… Попробуй ещё разок.")
