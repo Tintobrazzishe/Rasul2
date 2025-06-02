@@ -2,10 +2,6 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 import google.generativeai as genai
 
-# 🔑 Твои ключи
-TELEGRAM_BOT_TOKEN = '8010941473:AAGXyMQGteVVrMcifYPBmI1Etw36L0z820Q'
-GEMINI_API_KEY = 'AIzaSyA-vcLI4K2OUGMBSfHatp_aooMzY_Ps1qI'
-
 # 🧠 Настройка Gemini
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(
