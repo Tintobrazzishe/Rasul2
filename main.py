@@ -8,11 +8,17 @@ from telegram.ext import (
 )
 import google.generativeai as genai
 import os
+from duckduckgo_search import DDGS
 
 # 🔑 Настройки API
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
+def search_web(query):
+    with DDGS() as ddgs:
+        results = ddgs.text(query, max_results=3)
+        return "\n".join([f"{r['title']}\n{r['href']}" for r in results])
+        
 # 🧠 Настройка Gemini
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel(
@@ -58,6 +64,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not should_respond:
         return
 
+    # 🔎 Проверка: юзер просит погуглить
+    search_triggers = ["погугли", "найди", "что в интернете", "загугли"]
+    if any(trigger in user_input.lower() for trigger in search_triggers):
+        try:
+            results = search_web(user_input)
+            await message.reply_text(f"Я нагуглил, брат:\n\n{results}")
+            return
+        except Exception as e:
+            print("Ошибка поиска:", e)
+            await message.reply_text("Что-то не получилось с гуглением, брат…")
+            return
+            
     # 🧠 Подгружаем память
     nickname = user_nicknames.get(user_id, message.from_user.first_name)
     facts = user_facts.get(user_id, "")
